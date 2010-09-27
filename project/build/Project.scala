@@ -1,10 +1,8 @@
 import sbt._
 
 class AndroidPlugin(info: ProjectInfo) extends PluginProject(info) 
-	with posterous.Publish with sxr.Publish
 {
-	val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
-	Credentials(Path.fromFile(System.getProperty("user.home")) / ".ivy2" / ".credentials", log)
-	
+	val scalatest = "org.scalatest" % "scalatest" % "1.0.1" % "test"
+	val mockito = "org.mockito" % "mockito-all" % "1.8.1" % "test"
 	val proguard = "net.sf.proguard" % "proguard" % "4.4"
 }
