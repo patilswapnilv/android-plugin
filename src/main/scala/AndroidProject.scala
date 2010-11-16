@@ -20,9 +20,17 @@ object AndroidProject {
   val DefaultResourcesApkName = "resources.apk"
   val DefaultDxJavaOpts = "-JXmx512m"
   val manifestSchema = "http://schemas.android.com/apk/res/android"
+
+  
 }
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
+  
+  override def outputDirectoryName = "bin"
+  override def dependencyPath = "libs"
+  override def managedDependencyPath = "libs"
+  override def mainSourcePath = "."
+  
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
