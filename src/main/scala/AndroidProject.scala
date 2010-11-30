@@ -20,7 +20,8 @@ object AndroidProject {
   val DefaultResourcesApkName = "resources.apk"
   val DefaultDxJavaOpts = "-JXmx512m"
   val manifestSchema = "http://schemas.android.com/apk/res/android"
-
+  
+  val DefaultGeneratedDirectoryName = "gen"
   
 }
 
@@ -30,11 +31,13 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   override def dependencyPath = "libs"
   override def managedDependencyPath = "libs"
   override def mainSourcePath = "."
+  override def mainJavaSourcePath = "src"
   
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
   def libraryJarPath = androidJarPath +++ addonsJarPath
+  
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
   
   import AndroidProject._
@@ -56,6 +59,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def packageApkName = artifactBaseName + ".apk"
   def resourcesApkName = DefaultResourcesApkName
   def dxJavaOpts = DefaultDxJavaOpts
+  def generatedRFile = DefaultGeneratedDirectoryName
 
   def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
   lazy val androidSdkPath = {
@@ -115,8 +119,8 @@ try {
   def aaptGenerateAction = aaptGenerateTask describedAs("Generate R.java.")
   def aaptGenerateTask = execTask {<x>
       {aaptPath.absolutePath} package -m -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
-         -I {androidJarPath.absolutePath} -J {mainJavaSourcePath.absolutePath}
-    </x>} dependsOn directory(mainJavaSourcePath)
+         -I {androidJarPath.absolutePath} -J {generatedRFile.absolutePath}
+    </x>} dependsOn directory(generatedRFile)
 
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
@@ -133,6 +137,11 @@ try {
           }.get
   }
   
+  class DoubleEntrySource extends MainCompileConfig { 
+    override def sources = descendents(mainJavaSourcePath, "*.java") +++ descendents(generatedRFile, "R.java")
+  }
+   
+  override def mainCompileConfiguration = new DoubleEntrySource
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
   
   /** Forward compatibility with sbt 0.6+ Scala build versions */
