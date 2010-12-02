@@ -64,15 +64,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
   lazy val androidSdkPath = {
     val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_SDK")
-    val paths = for { e <- envs; p = System.getenv(e); if p != null } yield p
-try {
-	val file = new java.io.FileInputStream(new java.io.File(sourcePath / "local.properties" toString))
-	val props = new java.util.Properties
-    	props.load(file)
-	//paths + if (props containsKey "sdk.dir") props get "sdk.dir" toString else None
-} catch {
-	case e:Exception => println("local.properties non existant")
-}
+    val paths = for { e <- envs; p = System.getenv(e); if p != null } yield p    
     if (paths.isEmpty) error("You need to set " + envs.mkString(" or "))
     Path.fromFile(paths.first)
   }

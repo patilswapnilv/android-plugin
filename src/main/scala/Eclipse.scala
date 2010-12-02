@@ -35,6 +35,43 @@ trait Eclipse extends AndroidProject {
     		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
     		<nature>org.eclipse.jdt.core.javanature</nature>
     	</natures>
+      <!-- Linked resources --> %s
     </projectDescription>
-  """ format name
+  """
+  
+  def generateClasspath = {
+    
+  }
+  
+  val eclipseClasspath = """
+  <?xml version="1.0" encoding="UTF-8"?>
+  <classpath>
+  	<classpathentry kind="src" path="%s"/>
+  	<classpathentry kind="src" path="%s"/>
+    <classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+  
+    <!-- linked resources -->
+    <classpathentry kind="src" path="%s"/>
+  
+  	<classpathentry kind="output" path="%s"/>
+  </classpath>
+  """
+  
+  val classpathEntry = """<classpathentry kind="lib" path="%s"/>\n"""
+  
+  val linkedResources = """	
+  <linkedResources>
+		<link>
+			<name>%s_src</name>
+			<type>2</type>
+			<locationURI>%s</locationURI>
+		</link>
+	</linkedResources>
+  """ 
+  
+  lazy val print = task {
+      
+    None
+  }
+    
 }
