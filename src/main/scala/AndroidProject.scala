@@ -25,6 +25,7 @@ object AndroidProject {
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
+  // We follow android convention in terms of folder structure by default
   override def outputDirectoryName = "bin"
   override def dependencyPath = "libs"
   override def managedDependencyPath = "libs"
