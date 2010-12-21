@@ -28,19 +28,32 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
 
   lazy val classpathFile: File = info.projectPath / ".classpath" asFile
 
+  // Depending on the type, will generate the correct classpath entry
   def classpathEntry(p: Any): Node = p match {
     case p: sbt.Project => <classpathentry kind="src" path={ p.projectName.value + "_src" }/>
     case p: sbt.Path => <classpathentry kind="lib" path={ p.relativePath }/>
+    case p: String => <classpathentry kind="con" path={ p }/>
   }
 
   def getLibraries = {
     dependencyPath.descendentsExcept("*.jar", "test").get.map { classpathEntry(_) }
   }
 
+  def getDependenciesLibrary = {
+    (List[Node]() /: dependencies)((l, v) =>
+      v.asInstanceOf[AndroidProject].dependencyPath.descendentsExcept("*.jar", "test").get.map { p: Path =>
+        classpathEntry(p.absolutePath)
+      }.toList ++ l)
+  }
+
+  def getSrcForDependencies = {
+    (List[Node]() /: dependencies)((l, v) => classpathEntry(v) :: l)
+  }
+
   def getLibrarySources(project: Project) = {
     (List[Node]() /: dependencies)((l, v) => linkedResourcesXML(v.asInstanceOf[AndroidProject]) :: l)
   }
-  
+
   def linkedResourcesXML(project: AndroidProject) =
     <linkedResources>
       <link>
@@ -54,8 +67,9 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
     <classpath>
       <classpathentry kind="src" path={ mainJavaSourcePath relativePath }/>
       <classpathentry kind="src" path={ generatedRFile relativePath }/>
-      { getLibrarySources(this) }
       { getLibraries }
+      { getDependenciesLibrary }
+      { getSrcForDependencies }
       <classpathentry kind="output" path={ outputPath relativePath }/>
       <classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
     </classpath>
@@ -92,6 +106,7 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
         <nature>com.android.ide.eclipse.adt.AndroidNature</nature>
         <nature>org.eclipse.jdt.core.javanature</nature>
       </natures>
+      { getLibrarySources(this) }
     </projectDescription>
 
 }
