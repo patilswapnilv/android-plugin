@@ -28,7 +28,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   // We follow android convention in terms of folder structure by default
   override def outputDirectoryName = "bin"
   override def dependencyPath = "libs"
-  override def managedDependencyPath = "libs"
+  override def managedDependencyPath = super.managedDependencyPath
   override def mainSourcePath = "."
   override def mainJavaSourcePath = "src"
 
@@ -61,12 +61,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def generatedRFile = DefaultGeneratedDirectoryName
 
   def scalaHomePath = Path.fromFile(new File(System.getProperty("scala.home")))
+  
   lazy val androidSdkPath = {
     val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_SDK")
     val paths = for { e <- envs; p = System.getenv(e); if p != null } yield p
     if (paths.isEmpty) error("You need to set " + envs.mkString(" or "))
     Path.fromFile(paths.first)
   }
+
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
   def isWindows = System.getProperty("os.name").startsWith("Windows")
   def osBatchSuffix = if (isWindows) ".bat" else ""
@@ -77,14 +79,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     if (isWindows) "" else dxJavaOpts
   }
   def platformName2ApiLevel: Int = androidPlatformName match {
-    case "android-1.0" => 1
-    case "android-1.1" => 2
-    case "android-1.5" => 3
-    case "android-1.6" => 4
-    case "android-2.0" => 5
-    case "android-2.1" => 7
-    case "android-2.2" => 8
-    case "android-2.3" => 9
+    case "android-1" => 1
+    case "android-2" => 2
+    case "android-3" => 3
+    case "android-4" => 4
+    case "android-5" => 5
+    case "android-7" => 7
+    case "android-8" => 8
+    case "android-9" => 9
   }
 
   def androidToolsPath = androidSdkPath / "tools"
@@ -111,13 +113,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val aaptGenerate = aaptGenerateAction
   def aaptGenerateAction = aaptGenerateTask describedAs ("Generate R.java.")
   def aaptGenerateTask = execTask {
-    <x>
-      { aaptPath.absolutePath }
-      package -m -M{ androidManifestPath.absolutePath }
-      -S{ mainResPath.absolutePath }
-      -I{ androidJarPath.absolutePath }
-      -J{ generatedRFile.absolutePath }
-    </x>
+    <x>{ aaptPath.absolutePath } package -m -M { androidManifestPath.absolutePath } -S { mainResPath.absolutePath } -I { androidJarPath.absolutePath } -J { generatedRFile.absolutePath } </x>
   } dependsOn directory(generatedRFile)
 
   lazy val aidl = aidlAction
@@ -180,24 +176,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def dxAction = dxTask dependsOn (proguard) describedAs ("Convert class files to dex files")
   def dxTask = fileTask(classesDexPath from classesMinJarPath) {
     execTask {
-      <x>
-        { dxPath.absolutePath }{ dxMemoryParameter }
-        --dex --output={ classesDexPath.absolutePath }{ classesMinJarPath.absolutePath }
-      </x>
+      <x> { dxPath.absolutePath } { dxMemoryParameter } --dex --output={ classesDexPath.absolutePath } { classesMinJarPath.absolutePath }</x>
     } run
   }
 
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn (dx) describedAs ("Package resources and assets.")
   def aaptPackageTask = execTask {
-    <x>
-      { aaptPath.absolutePath }
-      package -f -M{ androidManifestPath.absolutePath }
-      -S{ mainResPath.absolutePath }
-      -A{ mainAssetsPath.absolutePath }
-      -I{ androidJarPath.absolutePath }
-      -F{ resourcesApkPath.absolutePath }
-    </x>
+    <x>{ aaptPath.absolutePath } package -f -M { androidManifestPath.absolutePath } -S { mainResPath.absolutePath } -A { mainAssetsPath.absolutePath } -I { androidJarPath.absolutePath } -F { resourcesApkPath.absolutePath }</x>
   } dependsOn directory(mainAssetsPath)
 
   lazy val packageDebug = packageDebugAction
@@ -208,13 +194,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val cleanApk = cleanTask(packageApkPath) describedAs ("Remove apk package")
   def packageTask(signPackage: Boolean) = execTask {
-    <x>
-      { apkbuilderPath.absolutePath }{ packageApkPath.absolutePath }
-      { if (signPackage) "-d" else "-u" }
-      -z{ resourcesApkPath.absolutePath }
-      -f{ classesDexPath.absolutePath }
-      { proguardInJars.get.map(" -rj " + _.absolutePath) }
-    </x>
+    <x>{ apkbuilderPath.absolutePath } { packageApkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { resourcesApkPath.absolutePath } -f { classesDexPath.absolutePath } { proguardInJars.get.map(" -rj " + _.absolutePath) }</x>
   } dependsOn (cleanApk)
 
   lazy val installEmulator = installEmulatorAction
@@ -247,9 +227,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def uninstallTask(emulator: Boolean) = adbTask(emulator, "uninstall " + manifestPackage)
 
   def adbTask(emulator: Boolean, action: String) = execTask {
-    <x>
-      { adbPath.absolutePath }{ if (emulator) "-e" else "-d" }{ action }
-    </x>
+    <x>{ adbPath.absolutePath } { if (emulator) "-e" else "-d" } { action }</x>
   }
 
   lazy val manifest: scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)

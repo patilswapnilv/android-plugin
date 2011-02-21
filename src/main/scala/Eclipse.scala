@@ -55,13 +55,11 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
   }
 
   def linkedResourcesXML(project: AndroidProject) =
-    <linkedResources>
       <link>
         <name>{ project.projectName.value + "_src" }</name>
         <type>2</type>
         <location>{ project.mainJavaSourcePath.absolutePath }</location>
       </link>
-    </linkedResources>
 
   lazy val classPathFileXML =
     <classpath>
@@ -106,7 +104,9 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
         <nature>com.android.ide.eclipse.adt.AndroidNature</nature>
         <nature>org.eclipse.jdt.core.javanature</nature>
       </natures>
+  	  <linkedResources>
       { getLibrarySources(this) }
+      </linkedResources>
     </projectDescription>
 
 }
