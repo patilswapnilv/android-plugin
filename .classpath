@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/main/scala"/>
+	<classpathentry kind="src" path="src/test/scala"/>
 	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/compile/proguard-4.4.jar"/>
 	<classpathentry kind="lib" path="project/boot/scala-2.7.7/lib/scala-compiler.jar"/>
 	<classpathentry kind="lib" path="project/boot/scala-2.7.7/lib/scala-library.jar"/>
@@ -22,6 +23,11 @@
 	<classpathentry kind="lib" path="target/scala_2.7.7/sbt-android-plugin-0.5.1.jar"/>
 	<classpathentry kind="lib" path="target/scala_2.7.7/sbt-android-plugin-0.5.2.jar"/>
 	<classpathentry kind="lib" path="lib_managed/scala_2.8.1/compile/proguard-4.4.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/test/hamcrest-core-1.1.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/test/mockito-core-1.8.5.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/test/objenesis-1.0.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/test/specs-1.6.0.jar"/>
+	<classpathentry kind="lib" path="lib_managed/scala_2.7.7/test/test-compat_2.7.7-0.4.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

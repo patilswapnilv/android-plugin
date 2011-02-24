@@ -5,3 +5,13 @@ project/build/target/
 project/plugins/src_managed/
 project/plugins/project/
 .redcar/
+
+src/test/project/project/boot
+src/test/project/project/target
+src/test/project/plugins/src_managed/
+src/test/project/plugins/project/
+
+*.jar
+*.class
+
+

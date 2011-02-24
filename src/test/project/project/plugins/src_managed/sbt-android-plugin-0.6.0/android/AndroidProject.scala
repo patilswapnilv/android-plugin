@@ -3,12 +3,20 @@ package android
 import sbt._
 import Process._
 import Path._
+import scala.xml._
 
 trait Project extends DefaultProject {
 
   override def mainSourcePath = "."
-
   override def mainJavaSourcePath = "src"
+
+  def libraryJarPath = sdk.getAndroidJar
+
+  override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
+
+  val manifest = new Manifest(_)
+
+  val sdk = new SDK
 
   lazy val androidManifestPath: Path = {
     "AndroidManifest.xml".get.toList.first
@@ -18,23 +26,8 @@ trait Project extends DefaultProject {
     "res".get.toList.first
   }
 
-  lazy val aaptPath: Path = {
-    androidSdkPath / "tools" / "aapt"
-  }
-
-  lazy val androidSdkPath = {
-    val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_SDK")
-    val paths = for { e ← envs; p = System.getenv(e); if p != null } yield p
-    if (paths.isEmpty) error("You need to set " + envs.mkString(" or "))
-    Path.fromFile(paths.first)
-  }
-
   lazy val generatedRFile = {
     "gen".get.toList.first
-  }
-
-  lazy val androidJarPath = {
-    androidSdkPath / "platforms" / "android-9" / "android.jar"
   }
 
   /*
@@ -43,7 +36,7 @@ trait Project extends DefaultProject {
   lazy val aapt = aaptGenerateAction
   def aaptGenerateAction = aaptGenerateTask describedAs ("Generating R file")
   def aaptGenerateTask = execTask {
-    <x>{ aaptPath.absolutePath } package -m -M { androidManifestPath.absolutePath } -S { mainResPath.absolutePath } -I { androidJarPath.absolutePath } -J { generatedRFile.absolutePath }</x>
+    <x>{ sdk.aapt.absolutePath } package -m -M { androidManifestPath.absolutePath } -S { mainResPath.absolutePath } -I { sdk.getAndroidJar } -J { generatedRFile.absolutePath }</x>
   } dependsOn directory("gen")
 
   lazy val aidl = aaptGenerateAction
@@ -53,22 +46,22 @@ trait Project extends DefaultProject {
     FileUtilities.createDirectory(dir, log)
   }
 
-//  lazy val compileTask = task {
-//	  "ls" ! log
-//    None
-//  } dependsOn (aapt, aidl)
-//
-//  lazy val dexTask = task {
-//    None
-//  } dependsOn (compile)
-//
-//  lazy val packageTask = task {
-//    None
-//  } dependsOn (dex)
-//
-//  lazy val packageReleaseTask = task {
-//    None
-//  } dependsOn (packageTask)
+  /**
+   * TASKS
+   */
+  override def compileAction = super.compileAction dependsOn (aapt, aidl)
+
+  lazy val dexTask = task {
+    None
+  } dependsOn (compile)
+
+  lazy val packageTask = task {
+    None
+  } dependsOn (dex)
+
+  lazy val packageReleaseTask = task {
+    None
+  } dependsOn (packageTask)
 
 }
 

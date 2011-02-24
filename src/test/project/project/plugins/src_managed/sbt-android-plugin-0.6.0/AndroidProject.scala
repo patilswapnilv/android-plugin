@@ -78,6 +78,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     // doesn't currently support -JXmx arguments.  For now, omit them in windows.
     if (isWindows) "" else dxJavaOpts
   }
+  
   def platformName2ApiLevel: Int = androidPlatformName match {
     case "android-1" => 1
     case "android-2" => 2
