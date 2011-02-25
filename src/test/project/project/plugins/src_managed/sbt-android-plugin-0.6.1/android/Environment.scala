@@ -19,4 +19,8 @@ class SDK {
 	  getSdkHome / "platform-tools" / "aapt"
   }
   
+  lazy val dex:Path = {
+	  getSdkHome / "platform-tools" / "dx"
+  }
+  
 }

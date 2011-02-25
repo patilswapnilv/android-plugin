@@ -86,19 +86,9 @@ trait Project extends DefaultProject {
     None
   } dependsOn (packageTask)
 
-  lazy val packageDebug = packageDebugAction
-  def packageDebugAction = packageTask(true) dependsOn (aaptPackage) describedAs ("Package and sign with a debug key.")
-
-  lazy val packageRelease = packageReleaseAction
-  def packageReleaseAction = packageTask(false) dependsOn (aaptPackage) describedAs ("Package without signing.")
-
-  lazy val cleanApk = cleanTask(packageApkPath) describedAs ("Remove apk package")
-  def packageTask(signPackage: Boolean) = execTask {
-    <x>{ apkbuilderPath.absolutePath } { packageApkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { resourcesApkPath.absolutePath } -f { classesDexPath.absolutePath } { proguardInJars.get.map(" -rj " + _.absolutePath) }</x>
-  } dependsOn (cleanApk)
 }
 
-trait Library extends android.Project {
+trait LibraryProject extends android.Project {
 }
 
 object AndroidProject {

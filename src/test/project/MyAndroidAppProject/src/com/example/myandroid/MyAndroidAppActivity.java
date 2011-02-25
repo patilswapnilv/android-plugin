@@ -2,6 +2,7 @@ package com.example.myandroid;
 
 import android.app.Activity;
 import android.os.Bundle;
+import novoda.lib.httpservice.HttpService;
 
 public class MyAndroidAppActivity extends Activity
 {

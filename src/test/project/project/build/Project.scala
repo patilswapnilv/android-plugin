@@ -16,9 +16,33 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
 
   override def shouldCheckOutputDirectories = false
 
-  lazy val main = project("MyAndroidAppProject", "MyAndroidAppProject", new MainProject(_))
+  lazy val httpservice = project("MyAndroidAppProject" / "libs" / "RESTProvider" / "libs" / "HttpService",
+     "HttpService", new HttpLibraryProject(_));
+  
+  lazy val sqliteprovider = project("MyAndroidAppProject" / "libs" / "RESTProvider" / "libs" / "SQLiteProvider",
+    "SQLiteProvider", new LibraryProject(_));
+  
+  lazy val restprovider = project("MyAndroidAppProject" / "libs" / "RESTProvider", 
+    "RESTProvider", 
+    new LibraryProject(_),
+    httpservice, sqliteprovider
+    )
+  
+  lazy val main = project("MyAndroidAppProject", "MyAndroidAppProject", new MainProject(_), restprovider)
 
   class MainProject(info: ProjectInfo) extends DefaultProject(info) with android.Project {
+  }
+  
+  class LibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Project
+
+  
+  class HttpLibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Project {
+    val jacksoncore = "org.codehaus.jackson" % "jackson-core-asl" % "1.6.2" % "compile"
+    val jacksonmapper = "org.codehaus.jackson" % "jackson-mapper-asl" % "1.6.2" % "compile"
+	  val roboelectric = "org.robolectric" % "robolectric" % "0.9.4" % "test" from "http://pivotal.github.com/robolectric/downloads/robolectric-0.9.4-all.jar"
+    val mockito_io = "org.mockito" % "mockito-all" % "1.8.5" % "test"
+    val signpostcore = "oauth.signpost" % "signpost-core" % "1.2.1" % "compile"
+    val signpostcommons = "oauth.signpost" % "signpost-commonshttp4" % "1.2.1" % "compile"
   }
 
 }
