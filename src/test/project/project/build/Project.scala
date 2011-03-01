@@ -28,15 +28,11 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
     httpservice, sqliteprovider
     )
   
-  lazy val main = project("MyAndroidAppProject", "MyAndroidAppProject", new MainProject(_), restprovider)
-
-  class MainProject(info: ProjectInfo) extends DefaultProject(info) with android.Project {
-  }
+  lazy val main = project("MyAndroidAppProject", "MyAndroidAppProject", new MainProject(_), restprovider)  
   
-  class LibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Project
-
-  
-  class HttpLibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Project {
+  class MainProject(info: ProjectInfo) extends DefaultProject(info) with android.Project
+  class LibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Library
+  class HttpLibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Library {
     val jacksoncore = "org.codehaus.jackson" % "jackson-core-asl" % "1.6.2" % "compile"
     val jacksonmapper = "org.codehaus.jackson" % "jackson-mapper-asl" % "1.6.2" % "compile"
 	  val roboelectric = "org.robolectric" % "robolectric" % "0.9.4" % "test" from "http://pivotal.github.com/robolectric/downloads/robolectric-0.9.4-all.jar"
@@ -44,5 +40,4 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
     val signpostcore = "oauth.signpost" % "signpost-core" % "1.2.1" % "compile"
     val signpostcommons = "oauth.signpost" % "signpost-commonshttp4" % "1.2.1" % "compile"
   }
-
 }

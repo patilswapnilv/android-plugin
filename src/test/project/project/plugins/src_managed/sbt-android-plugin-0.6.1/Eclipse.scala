@@ -34,7 +34,8 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
     case p: sbt.Path => <classpathentry kind="lib" path={ p.relativePath }/>
     case p: String => <classpathentry kind="con" path={ p }/>
   }
-
+  
+  
   def getLibraries = {
     dependencyPath.descendentsExcept("*.jar", "test").get.map { classpathEntry(_) }
   }

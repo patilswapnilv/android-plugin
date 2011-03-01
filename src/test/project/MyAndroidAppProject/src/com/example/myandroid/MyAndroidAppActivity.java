@@ -11,6 +11,7 @@ public class MyAndroidAppActivity extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(novoda.rest.R.layout.main);
+        getString( novoda.lib.sqliteprovider.R.string.hello_world);
     }
 }
