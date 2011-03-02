@@ -9,6 +9,7 @@ class SDK(sdkHome: Path, apiLevel: Int) {
   lazy val aapt: Path = sdkHome / "platform-tools" / "aapt"
   lazy val dex = sdkHome / "platform-tools" / "dx"
   lazy val apkBuilder = sdkHome / "platform-tools" / "apkbuilder"
+  lazy val sdkLib = sdkHome / "tools" / "lib" / "sdklib.jar"
 }
 
 object SDK {

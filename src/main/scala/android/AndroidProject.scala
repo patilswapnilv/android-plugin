@@ -5,6 +5,10 @@ import Process._
 import Path._
 import scala.xml._
 
+//case class AndroidProject(info: ProjectInfo) extends DefaultProject(info) with android.Project
+//case class LibraryProject(info: ProjectInfo) extends DefaultProject(info) with android.Library
+//case class InstrumentationProject(info: ProjectInfo) extends DefaultProject(info) with android.Library
+
 trait Project extends DefaultProject {
   import AndroidProjectPaths._
 
@@ -16,6 +20,10 @@ trait Project extends DefaultProject {
 
   val manifest = Manifest(this.asInstanceOf[android.Project])
   val sdk = SDK(manifest.sdkVersion)
+
+  lazy val apk:Path = mainCompilePath / manifest.versionnedName(this.name) + ".apk"
+  lazy val res:Path = mainResPath
+  lazy val dexD:Path = DefaultMainCompileDirectoryName / "classes.dex"
 
   lazy val androidManifestPath: Path = {
     "AndroidManifest.xml".get.toList.first
@@ -32,8 +40,6 @@ trait Project extends DefaultProject {
   lazy val mainAssetsPath = {
     "assets".get.toList.first
   }
-
-  lazy val apk = mainCompilePath / manifest.versionnedName(this.name)
 
   lazy val packageApkPath = apk
   lazy val resourcesApkPath = mainResPath
@@ -100,30 +106,30 @@ trait Project extends DefaultProject {
    * Package into APK
    */
   override def packageAction = super.packageAction dependsOn (packageIntoApkAction)
-  
+
   def aaptPackageAction = aaptPackageTask dependsOn (dex) describedAs ("Package resources and assets.")
   def aaptPackageTask = execTask {
     log.info("packaging into APK file")
     log.debug("the following asset folders will be included: %s".format(assetDirectories.getPaths.mkString(",")))
     <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -f -M { androidManifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -A { assetDirectories.getPaths.mkString(" -A ") } -I { sdk.androidJar } -F { apk.absolutePath + ".apk" }</x>
   } dependsOn directory(mainAssetsPath)
-//
-//  lazy val packageReleaseTask = task {
-//    None
-//  } dependsOn (packageTask)
-//
-//  lazy val packageDebug = packageDebugAction
-//  def packageDebugAction = packageTask(true) dependsOn (packageAction) describedAs ("Package and sign with a debug key.")
-//
-//  lazy val packageRelease = packageReleaseAction
-//  def packageReleaseAction = packageTask(false) dependsOn (packageAction) describedAs ("Package without signing.")
-//
-//  
-  
+  //
+  //  lazy val packageReleaseTask = task {
+  //    None
+  //  } dependsOn (packageTask)
+  //
+  //  lazy val packageDebug = packageDebugAction
+  //  def packageDebugAction = packageTask(true) dependsOn (packageAction) describedAs ("Package and sign with a debug key.")
+  //
+  //  lazy val packageRelease = packageReleaseAction
+  //  def packageReleaseAction = packageTask(false) dependsOn (packageAction) describedAs ("Package without signing.")
+  //
+  //  
+
   lazy val cleanApk = cleanTask(packageApkPath) describedAs ("Remove apk package")
-  
+
   def packageIntoApkAction = packageApkTask(false) dependsOn (aaptPackageAction)
-  
+
   def packageApkTask(signPackage: Boolean) = execTask {
     <x>{ sdk.apkBuilder.absolutePath } { packageApkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { resourcesApkPath.absolutePath } -f { classesDexPath.absolutePath } </x>
   } dependsOn (cleanApk)
