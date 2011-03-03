@@ -15,3 +15,5 @@ src/test/project/plugins/project/
 *.class
 
 
+src/test/project/MyAndroidAppProject/bin/
+src/test/project/MyAndroidAppProject/bin/classes.dex

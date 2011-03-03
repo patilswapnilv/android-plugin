@@ -20,7 +20,7 @@ object SDK {
     val RegexAndroidHoneycomb = new Regex("""android-([a-zA-Z]*)""")
     platformName match {
       case RegexAndroid(level: String) ⇒ level.toInt
-      case RegexAndroidHoneycomb       ⇒ 11
+      case RegexAndroidHoneycomb       ⇒ 13
       case _                           ⇒ 1
     }
   }

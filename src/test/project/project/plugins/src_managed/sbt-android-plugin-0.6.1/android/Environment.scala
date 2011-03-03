@@ -9,6 +9,7 @@ class SDK(sdkHome: Path, apiLevel: Int) {
   lazy val aapt: Path = sdkHome / "platform-tools" / "aapt"
   lazy val dex = sdkHome / "platform-tools" / "dx"
   lazy val apkBuilder = sdkHome / "platform-tools" / "apkbuilder"
+  lazy val sdkLib = sdkHome / "tools" / "lib" / "sdklib.jar"
 }
 
 object SDK {
@@ -19,7 +20,7 @@ object SDK {
     val RegexAndroidHoneycomb = new Regex("""android-([a-zA-Z]*)""")
     platformName match {
       case RegexAndroid(level: String) ⇒ level.toInt
-      case RegexAndroidHoneycomb       ⇒ 11
+      case RegexAndroidHoneycomb       ⇒ 13
       case _                           ⇒ 1
     }
   }

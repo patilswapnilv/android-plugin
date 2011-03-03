@@ -5,46 +5,22 @@ import Process._
 import Path._
 import scala.xml._
 
-trait Project extends DefaultProject {
-  import AndroidProjectPaths._
+abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) with AndroidProjectPaths {
 
-  override def mainSourcePath = "."
-  override def mainJavaSourcePath = "src"
+  import AndroidProject._
+
+  lazy val manifest = Manifest(this)
+  lazy val sdk = SDK(manifest.sdkVersion)
+  lazy val libraryJarPath = sdk.androidJar
+
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
-
-  def libraryJarPath = sdk.androidJar
-
-  val manifest = Manifest(this.asInstanceOf[android.Project])
-  val sdk = SDK(manifest.sdkVersion)
-
-  lazy val androidManifestPath: Path = {
-    "AndroidManifest.xml".get.toList.first
-  }
-
-  lazy val mainResPath: Path = {
-    "res".get.toList.first
-  }
-
-  lazy val generatedRFile = {
-    "gen".get.toList.first
-  }
-
-  lazy val mainAssetsPath = {
-    "assets".get.toList.first
-  }
-
-  lazy val apk = mainCompilePath / manifest.versionnedName(this.name)
-
-  lazy val packageApkPath = apk
-  lazy val resourcesApkPath = mainResPath
-  lazy val classesDexPath = DefaultMainCompileDirectoryName / "classes.dex"
 
   /**
    * Gets assets folder for each of the plugin on top of the current project
    */
   lazy val assetDirectories: PathFinder = {
-    (mainAssetsPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
-      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[android.Project].assetDirectories else pf
+    (assetsDirectoryPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
+      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[AndroidProject].assetDirectories else pf
     }
   }
 
@@ -52,8 +28,8 @@ trait Project extends DefaultProject {
    * Gets resource folder for each of the plugin on top of the current project
    */
   lazy val resDirectories: PathFinder = {
-    (mainResPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
-      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[android.Project].resDirectories else pf
+    (resDirectoryPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
+      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[AndroidProject].resDirectories else pf
     }
   }
 
@@ -64,7 +40,7 @@ trait Project extends DefaultProject {
   def aaptGenerateAction = aaptGenerateTask describedAs ("Generating R file")
   def aaptGenerateTask = execTask {
     log.info("generating the R file")
-    <x>{ sdk.aapt.absolutePath } package -m -M { androidManifestPath.absolutePath } -S { mainResPath.absolutePath } -I { sdk.androidJar } -J { generatedRFile.absolutePath }</x>
+    <x>{ sdk.aapt.absolutePath } package -m -M { manifestPath.absolutePath } -S { resDirectoryPath.absolutePath } -I { sdk.androidJar } -J { genDirectoryPath.absolutePath }</x>
   } dependsOn directory("gen")
 
   lazy val aidl = aaptGenerateAction
@@ -84,12 +60,6 @@ trait Project extends DefaultProject {
    */
   override def compileAction = super.compileAction dependsOn (aapt, aidl)
 
-  /**
-   * DEX
-   */
-  def DefaultClassesMinJarName = "myandroidappproject_2.8.1-1.0.4.jar"
-  def DefaultClassesDexName = "classes.dex".get.toList.first
-
   lazy val dex = dexAction
   def dexAction = dexTask describedAs ("Converting .class to dex files")
   def dexTask = execTask {
@@ -100,44 +70,31 @@ trait Project extends DefaultProject {
    * Package into APK
    */
   override def packageAction = super.packageAction dependsOn (packageIntoApkAction)
-  
+
   def aaptPackageAction = aaptPackageTask dependsOn (dex) describedAs ("Package resources and assets.")
   def aaptPackageTask = execTask {
-    log.info("packaging into APK file")
+    log.info("packaging resources into temporary APK file")
     log.debug("the following asset folders will be included: %s".format(assetDirectories.getPaths.mkString(",")))
-    <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -f -M { androidManifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -A { assetDirectories.getPaths.mkString(" -A ") } -I { sdk.androidJar } -F { apk.absolutePath + ".apk" }</x>
-  } dependsOn directory(mainAssetsPath)
-//
-//  lazy val packageReleaseTask = task {
-//    None
-//  } dependsOn (packageTask)
-//
-//  lazy val packageDebug = packageDebugAction
-//  def packageDebugAction = packageTask(true) dependsOn (packageAction) describedAs ("Package and sign with a debug key.")
-//
-//  lazy val packageRelease = packageReleaseAction
-//  def packageReleaseAction = packageTask(false) dependsOn (packageAction) describedAs ("Package without signing.")
-//
-//  
-  
-  lazy val cleanApk = cleanTask(packageApkPath) describedAs ("Remove apk package")
-  
+    <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -f -M { manifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -A { assetDirectories.getPaths.mkString(" -A ") } -I { sdk.androidJar } -F { tmpResApkPath.absolutePath }</x>
+  } dependsOn directory(assetsDirectoryPath)
+
+  lazy val cleanApk = cleanTask(apkPath) describedAs ("Remove apk package")
+
   def packageIntoApkAction = packageApkTask(false) dependsOn (aaptPackageAction)
-  
-  def packageApkTask(signPackage: Boolean) = execTask {
-    <x>{ sdk.apkBuilder.absolutePath } { packageApkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { resourcesApkPath.absolutePath } -f { classesDexPath.absolutePath } </x>
+
+  def packageApkTask(signPackage: Boolean) = task {
+    log.info("Creating final APK in debug mode")
+    ApkBuilder(this).create
+
+    //<x>{ sdk.apkBuilder.absolutePath } { apkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { tmpResApkPath.absolutePath } -f { classesDexPath.absolutePath } </x>
   } dependsOn (cleanApk)
 }
 
-trait Library extends android.Project {
+trait Library extends AndroidProject {
 
   /**
    * Use the android.jar from Parent.
    */
-  //  override def libraryJarPath = info.parent.get match {
-  //	  case android.Project => _.libraryJarPath
-  //	  case android.Library => _.libraryJarPath
-  //  }
   def doNothing = task { None }
   override def packageAction = doNothing
   override def publishLocalAction = doNothing
@@ -146,6 +103,9 @@ trait Library extends android.Project {
   override def deliverAction = doNothing
 }
 
+/**
+ * Task description
+ */
 object AndroidProject {
   val AaptDescription = "Generate resource file for the given project."
   val DexDescription = "Convert .class file to classes.dex."
@@ -155,19 +115,57 @@ object AndroidProject {
 }
 
 /**
- * Default Paths for
+ * Some Android specific Layout and folder structure
+ */
+trait AndroidProjectPaths extends DefaultProject {
+  import AndroidProjectPaths._
+
+  def defaultApkName = name + "_" + version + ".apk"
+
+  // Override defaults to fit Android structure
+  override def testSourcePath = path(DefaultTestDirectoryName)
+  override def outputDirectoryName = DefaultMainCompileDirectoryName
+  override def mainSourcePath = path(DefaultSourceDirectoryName)
+  override def mainJavaSourcePath = path(DefaultSourceDirectoryName)
+
+  def resDirectoryName = DefaultResourcesDirectoryName
+  def resDirectoryPath = path(resDirectoryName)
+  def genDirectoryName = DefaultGeneratedDirectoryName
+  def genDirectoryPath = path(genDirectoryName)
+  def assetsDirectoryName = DefaultAssetsDirectoryName
+  def assetsDirectoryPath = path(assetsDirectoryName)
+  def classesDexName = DefaultClassesDexName
+  def classesDexPath = outputPath / classesDexName
+  def apkPath = outputPath / defaultApkName
+
+  def manifestName = DefaultManifestName
+  def manifestPath = info.projectPath / manifestName
+
+  def tmpResApkName = DefaultTmpResourceApk
+  def tmpResApkPath = outputPath / tmpResApkName
+
+  // Tests
+  def testLocalSourcePath = testSourcePath / DefaultLocalTestDirectoryName
+  def testInstrumenationSourcePath = testSourcePath / DefaultInstrumentationTestDirectoryName
+  def testMonkeySourcePath = testSourcePath / DefaultMonkeyTestDirectoryName
+}
+
+/**
+ * Default Paths for Android project with Monkey, Instrumentation and Local Unit tests
  */
 object AndroidProjectPaths {
-  import sbt.Path._
-
   val DefaultSourceDirectoryName = "src"
   val DefaultMainCompileDirectoryName = "bin"
   val DefaultResourcesDirectoryName = "res"
   val DefaultGeneratedDirectoryName = "gen"
   val DefaultAssetsDirectoryName = "assets"
 
+  def DefaultClassesDexName = "classes.dex"
+  def DefaultTmpResourceApk = "tmp.apk"
+  def DefaultManifestName = "AndroidManifest.xml"
+
   val DefaultTestDirectoryName = "tests"
-  //  val DefaultLocalTestDirectoryName = DefaultTestDirectoryName / "local"
-  //  val DefaultInstrumentationTestDirectoryName = DefaultTestDirectoryName / "instrumentation"
-  //  val DefaultMonkeyTestDirectoryName = DefaultTestDirectoryName / "monkey"
+  val DefaultLocalTestDirectoryName = "local"
+  val DefaultInstrumentationTestDirectoryName = "instrumentation"
+  val DefaultMonkeyTestDirectoryName = "monkey"
 }
