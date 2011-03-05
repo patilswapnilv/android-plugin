@@ -1,6 +1,6 @@
 import sbt._
 
-abstract class AndroidTestProject(info: ProjectInfo) extends AndroidProject(info) {
+abstract class AndroidTestProject(info: ProjectInfo) extends AndroidProjectOld(info) {
   override def proguardInJars = Path.emptyPathFinder
   lazy val testEmulator = instrumentationTestAction(true) describedAs ("runs tests in emulator") dependsOn reinstallEmulator
   lazy val testDevice = instrumentationTestAction(false) describedAs ("runs tests on device") dependsOn reinstallDevice

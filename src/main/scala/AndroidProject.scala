@@ -4,7 +4,7 @@ import java.io._
 import sbt._
 import Process._
 
-object AndroidProject {
+object AndroidProjectOld {
   val DefaultAaptName = "aapt"
   val DefaultAdbName = "adb"
   val DefaultAidlName = "aidl"
@@ -23,7 +23,7 @@ object AndroidProject {
   val DefaultGeneratedDirectoryName = "gen"
 }
 
-abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
+abstract class AndroidProjectOld(info: ProjectInfo) extends DefaultProject(info) {
 
   // We follow android convention in terms of folder structure by default
   override def outputDirectoryName = "bin"
@@ -39,7 +39,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
 
-  import AndroidProject._
+  import AndroidProjectOld._
 
   def androidPlatformName: String
 

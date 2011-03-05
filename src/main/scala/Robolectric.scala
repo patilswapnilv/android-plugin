@@ -5,7 +5,7 @@ import scala.xml.Node
 
 import java.io.File
 
-trait Robolectric extends Eclipse { this: AndroidProject =>
+trait Robolectric extends Eclipse { this: AndroidProjectOld =>
 
   object Robolectric {
     val DefaultTestFolder = "tests"

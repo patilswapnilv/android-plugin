@@ -3,7 +3,7 @@ import java.io.File
 import java.nio.charset.Charset._
 import scala.xml.Node
 
-trait Eclipse extends AndroidProject { this: AndroidProject =>
+trait Eclipse extends AndroidProjectOld { this: AndroidProjectOld =>
 
   lazy val eclipse = eclipseAction
   def eclipseAction = eclipseTask describedAs "Create eclipse .project/.classpath for Android based projets"
@@ -42,7 +42,7 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
 
   def getDependenciesLibrary = {
     (List[Node]() /: dependencies)((l, v) =>
-      v.asInstanceOf[AndroidProject].dependencyPath.descendentsExcept("*.jar", "test").get.map { p: Path =>
+      v.asInstanceOf[AndroidProjectOld].dependencyPath.descendentsExcept("*.jar", "test").get.map { p: Path =>
         classpathEntry(p.absolutePath)
       }.toList ++ l)
   }
@@ -52,10 +52,10 @@ trait Eclipse extends AndroidProject { this: AndroidProject =>
   }
 
   def getLibrarySources(project: Project) = {
-    (List[Node]() /: dependencies)((l, v) => linkedResourcesXML(v.asInstanceOf[AndroidProject]) :: l)
+    (List[Node]() /: dependencies)((l, v) => linkedResourcesXML(v.asInstanceOf[AndroidProjectOld]) :: l)
   }
 
-  def linkedResourcesXML(project: AndroidProject) =
+  def linkedResourcesXML(project: AndroidProjectOld) =
       <link>
         <name>{ project.projectName.value + "_src" }</name>
         <type>2</type>

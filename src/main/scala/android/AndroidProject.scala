@@ -13,11 +13,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
   lazy val sdk = SDK(manifest.sdkVersion)
   lazy val libraryJarPath = sdk.androidJar
   
-  def androidPlatformName = sdk.apiLevelToName(manifest.sdkVersion)  
-  
-  def androidPlatformNameOption:Option[String] = {
-	Option(sdk.apiLevelToName(sdk.platformName2ApiLevel(androidPlatformName))) 
-  }
+//  def androidPlatformName = sdk.apiLevelToName(manifest.sdkVersion)  
+//  
+//  def androidPlatformNameOption:Option[String] = {
+//	Option(sdk.apiLevelToName(sdk.platformName2ApiLevel(androidPlatformName))) 
+//  }
 
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
 

@@ -1,7 +1,7 @@
 import sbt._
 import Process._
 
-trait MarketPublish extends AndroidProject {
+trait MarketPublish extends AndroidProjectOld {
   /** Keystore alias for the private key used to sign this application */
   def keyalias: String
   def keystorePath = Path.userHome / ".keystore"
