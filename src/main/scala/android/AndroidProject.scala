@@ -11,13 +11,22 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
 
   lazy val manifest = Manifest(this)
   lazy val sdk = SDK(manifest.sdkVersion)
-  lazy val libraryJarPath = sdk.androidJar
-  
-//  def androidPlatformName = sdk.apiLevelToName(manifest.sdkVersion)  
-//  
-//  def androidPlatformNameOption:Option[String] = {
-//	Option(sdk.apiLevelToName(sdk.platformName2ApiLevel(androidPlatformName))) 
-//  }
+
+  lazy val libraryJarPath: sbt.Path = {
+    log.info("Using version " + manifest.sdkVersion)
+    getLibPath(this).getOrElse(sdk.androidJar)
+    Path.fromFile("/opt/android-sdk-linux_86/platforms/android-8/android.jar")
+  }
+
+  def getLibPath(p: sbt.Project): Option[sbt.Path] = {
+    p match {
+      case x: AndroidLibraryProject ⇒ getLibPath(p.info.parent.get)
+      case x: AndroidProject ⇒ Some(sdk.androidJar)
+      case _ ⇒ None
+    }
+  }
+
+  // def androidPlatformName = sdk.apiLevelToName(manifest.sdkVersion)  
 
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
 
@@ -26,18 +35,18 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
    */
   lazy val assetDirectories: PathFinder = {
     (assetsDirectoryPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
-      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[AndroidProject].assetDirectories else pf
+      if (project.isInstanceOf[AndroidLibraryProject]) pf +++ project.asInstanceOf[AndroidProject].assetDirectories else pf
     }
-  }
+  } filter (_.exists)
 
   /**
    * Gets resource folder for each of the plugin on top of the current project
    */
   lazy val resDirectories: PathFinder = {
     (resDirectoryPath.asInstanceOf[sbt.PathFinder] /: this.dependencies) { (pf, project) ⇒
-      if (project.isInstanceOf[android.Library]) pf +++ project.asInstanceOf[AndroidProject].resDirectories else pf
+      if (project.isInstanceOf[AndroidLibraryProject]) pf +++ project.asInstanceOf[AndroidProject].resDirectories else pf
     }
-  }
+  } filter (_.exists)
 
   /*
    * Android Asset Packaging Tool, generating the R file
@@ -46,7 +55,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
   def aaptGenerateAction = aaptGenerateTask describedAs ("Generating R file")
   def aaptGenerateTask = execTask {
     log.info("generating the R file")
-    <x>{ sdk.aapt.absolutePath } package -m -M { manifestPath.absolutePath } -S { resDirectoryPath.absolutePath } -I { sdk.androidJar } -J { genDirectoryPath.absolutePath }</x>
+    swi
+    <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -m -M { manifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -I { libraryJarPath.absolutePath } -J { genDirectoryPath.absolutePath }</x>
+
+    /*
+     * for each library do the above with --custom-package <original package<
+     */
   } dependsOn directory("gen")
 
   lazy val aidl = aaptGenerateAction
@@ -69,7 +83,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
   lazy val dex = dexAction
   def dexAction = dexTask describedAs ("Converting .class to dex files")
   def dexTask = execTask {
-    <x> { sdk.dex.absolutePath } { "-JXmx512m" } --dex --output={ classesDexPath.absolutePath } { mainCompilePath.absolutePath }</x>
+    <x>{ sdk.dex.absolutePath } { "-JXmx512m" } --dex --output={ classesDexPath.absolutePath } { mainCompilePath.absolutePath } { " " }</x>
   } dependsOn (compile)
 
   /**
@@ -81,7 +95,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
   def aaptPackageTask = execTask {
     log.info("packaging resources into temporary APK file")
     log.debug("the following asset folders will be included: %s".format(assetDirectories.getPaths.mkString(",")))
-    <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -f -M { manifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -A { assetDirectories.getPaths.mkString(" -A ") } -I { sdk.androidJar } -F { tmpResApkPath.absolutePath }</x>
+    <x>{ sdk.aapt.absolutePath } package --auto-add-overlay -f -M { manifestPath.absolutePath } -S { resDirectories.getPaths.mkString(" -S ") } -A { assetDirectories.getPaths.mkString(" -A ") } -I { libraryJarPath.absolutePath } -F { tmpResApkPath.absolutePath }</x>
   } dependsOn directory(assetsDirectoryPath)
 
   lazy val cleanApk = cleanTask(apkPath) describedAs ("Remove apk package")
@@ -91,12 +105,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) wi
   def packageApkTask(signPackage: Boolean) = task {
     log.info("Creating final APK in debug mode")
     ApkBuilder(this).create
-
-    //<x>{ sdk.apkBuilder.absolutePath } { apkPath.absolutePath } { if (signPackage) "-d" else "-u" } -z { tmpResApkPath.absolutePath } -f { classesDexPath.absolutePath } </x>
   } dependsOn (cleanApk)
 }
 
-trait Library extends AndroidProject {
+abstract class AndroidLibraryProject(info: ProjectInfo) extends AndroidProject(info) {
 
   /**
    * Use the android.jar from Parent.
@@ -118,6 +130,9 @@ object AndroidProject {
   val AaptPackageDescription = "Package the project into deployable APK."
   val SignForReleaseDescription = "Signs the APK in order to release to market."
   val SignForDebugDescription = "Signs the APK with debug key located in ~/.android/debug.keystore."
+
+  def apply(info: ProjectInfo) = {
+  }
 }
 
 /**

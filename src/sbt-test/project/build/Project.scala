@@ -15,6 +15,8 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
   //override def keystorePath = Path.userHome / ".keystore" / "mykeys.keystore"
 
   override def shouldCheckOutputDirectories = false
+  
+  //override def androidPlatformName = "android-8"
 
   lazy val httpservice = project("MyAndroidAppProject" / "libs" / "RESTProvider" / "libs" / "HttpService",
     "HttpService", new HttpLibraryProject(_));
@@ -30,8 +32,8 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
   lazy val main = project("MyAndroidAppProject", "MyAndroidAppProject", new MainProject(_), restprovider)
 
   class MainProject(info: ProjectInfo) extends android.AndroidProject(info)
-  class LibraryProject(info: ProjectInfo) extends android.AndroidProject(info) with android.Library
-  class HttpLibraryProject(info: ProjectInfo) extends android.AndroidProject(info) with android.Library {
+  class LibraryProject(info: ProjectInfo) extends android.AndroidLibraryProject(info)
+  class HttpLibraryProject(info: ProjectInfo) extends android.AndroidLibraryProject(info) {
     val jacksoncore = "org.codehaus.jackson" % "jackson-core-asl" % "1.6.2" % "compile"
     val jacksonmapper = "org.codehaus.jackson" % "jackson-mapper-asl" % "1.6.2" % "compile"
     val roboelectric = "org.robolectric" % "robolectric" % "0.9.4" % "test" from "http://pivotal.github.com/robolectric/downloads/robolectric-0.9.4-all.jar"

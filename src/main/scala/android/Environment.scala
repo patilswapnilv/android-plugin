@@ -21,7 +21,7 @@ object SDK {
     platformName match {
       case RegexAndroid(level: String) ⇒ level.toInt
       case RegexAndroidHoneycomb       ⇒ 13
-      case _                           ⇒ 1
+      case _                           ⇒ 8
     }
   }
 
@@ -29,6 +29,12 @@ object SDK {
     "android-%s".format(apiLevel)
   }
 
+  
+  /*
+   *  List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_SDK", "ANDROID_ROOT").find(System.getenv(_) != null)
+   *  .getOrElse(error("You need to set ANDROID_HOME or ANDROID_SDK or androidHome in your .sbt file")
+   * 
+   */
   def apply() = {
     val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_SDK")
     val paths = for { e ← envs; p = System.getenv(e); if p != null } yield p
